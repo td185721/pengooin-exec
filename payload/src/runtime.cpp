@@ -16,22 +16,32 @@ void compiler_init();
 void env_install();
 
 void runtime_boot() {
+    dbg_log("runtime_boot: entry");
+
+    // pipe client goes FIRST, before the fragile bind chain. this way even if
+    // sig scans fail on a new client patch the watcher still sees a connected
+    // payload (with luau::run reporting "lua_State not bound" per exec) and
+    // we can debug the rest from console output.
+    net::pipe_client_start();
+    dbg_log("runtime_boot: pipe client kicked");
+
     // warmup: wait for the main module + imports to be fully mapped and for
-    // Hyperion (when present) to finish its own initialization. two seconds
-    // is enough on every SKU tested; a proper build gates this on the DataModel
-    // reaching Running instead of a sleep.
+    // Hyperion (when present) to finish its own initialization.
     Sleep(2000);
+    dbg_log("runtime_boot: warmup done");
 
     auto main = mem::main_module();
-    if (!main.base) return;
+    if (!main.base) { dbg_log("runtime_boot: main_module null, abort"); return; }
+    dbg_log("runtime_boot: main module @ 0x%016llX size=0x%x",
+            (unsigned long long)main.base, (unsigned)main.size);
 
-    scheduler_bind();       // phase 2 — TaskScheduler singleton
-    luau_state_bind();      // phase 2 — elevated lua_State
-    luau::api_bind();       // phase 3 — Luau C API jump table
-    compiler_init();        // phase 3 — Luau.Compiler
-    env_install();          // phase 4-11 — sUNC/UNC surface
-    ui::shell_start();      // phase 12 — in-game Win32 shell (Ctrl+Shift+P)
-    net::pipe_client_start();// phase 13 — control channel to watcher GUI
+    scheduler_bind();      dbg_log("runtime_boot: scheduler_bind done");
+    luau_state_bind();     dbg_log("runtime_boot: luau_state_bind done");
+    luau::api_bind();      dbg_log("runtime_boot: luau::api_bind done");
+    compiler_init();       dbg_log("runtime_boot: compiler_init done");
+    env_install();         dbg_log("runtime_boot: env_install done");
+    ui::shell_start();     dbg_log("runtime_boot: shell_start done");
+    dbg_log("runtime_boot: chain complete");
 }
 
 // weak stubs — /alternatename redirects any unresolved decorated symbol to the
