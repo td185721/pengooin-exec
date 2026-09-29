@@ -155,6 +155,7 @@ namespace fs_lib       { void install(); }
 namespace net_lib      { void install(); }
 namespace crypt_lib    { void install(); }
 namespace input_lib    { void install(); }
+namespace drawing_lib  { void install(); }
 
 }  // namespace r9k::env
 
@@ -169,6 +170,7 @@ void env_install() {
     env::net_lib::install();
     env::crypt_lib::install();
     env::input_lib::install();
-    // drawing_lib, ui_lib — appended as each phase lands.
+    env::drawing_lib::install();
+    // ui_lib — appended in phase 12.
 }
 }
