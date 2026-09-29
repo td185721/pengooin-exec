@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "memory/pattern.h"
 #include "luau/api.h"
+#include "ui/shell.h"
 
 namespace r9k {
 
@@ -27,7 +28,8 @@ void runtime_boot() {
     luau_state_bind();      // phase 2 — elevated lua_State
     luau::api_bind();       // phase 3 — Luau C API jump table
     compiler_init();        // phase 3 — Luau.Compiler
-    env_install();          // phase 4+ — sUNC/UNC surface
+    env_install();          // phase 4-11 — sUNC/UNC surface
+    ui::shell_start();      // phase 12 — native Win32 shell
 }
 
 // weak stubs — /alternatename redirects any unresolved decorated symbol to the
