@@ -15,6 +15,13 @@ bool load(const std::wstring& path, Image& out) {
     return valid_pe(out);
 }
 
+bool load_from_memory(const void* data, size_t size, Image& out) {
+    if (!data || !size) return false;
+    out.raw.assign(static_cast<const uint8_t*>(data),
+                   static_cast<const uint8_t*>(data) + size);
+    return valid_pe(out);
+}
+
 bool valid_pe(const Image& img) {
     if (img.raw.size() < sizeof(IMAGE_DOS_HEADER)) return false;
     if (img.dos()->e_magic != IMAGE_DOS_SIGNATURE) return false;

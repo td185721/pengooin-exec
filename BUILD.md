@@ -27,19 +27,35 @@ cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
 ```
 
-Artifacts:
+Single artifact: `build/injector/Release/pengooin.exe`. The payload DLL is
+compiled by the sibling `r9k_payload` target and embedded into the exe as an
+RCDATA resource at link time — no companion DLL is shipped.
 
-- `build/injector/Release/r9k.exe`
-- `build/payload/Release/r9k_payload.dll`
+Intermediate artifacts (for debugging):
+
+- `build/injector/Release/pengooin.exe`
+- `build/payload/Release/r9k_payload.dll`   (embedded copy of this ships)
 
 ## run
 
 ```bash
-build/injector/Release/r9k.exe --attach RobloxPlayerBeta.exe --dll build/payload/Release/r9k_payload.dll
+build/injector/Release/pengooin.exe
 ```
 
-The payload waits ~2s for the client to settle, then binds the task scheduler
-and elevated Luau state. `Ctrl+Shift+P` toggles the shell window from anywhere.
+The watcher lives in the tray, polls the process list every 500ms, and
+manual-maps the embedded payload into any `RobloxPlayerBeta.exe` it sees.
+Injections are logged to `%LOCALAPPDATA%\pengooin\watcher.log`. Dedup by pid
+prevents double-injection; when Roblox exits the pid falls out of the seen
+set so a relaunch is treated fresh.
+
+The payload waits ~2s after DllMain for the client to settle, then binds the
+task scheduler and elevated Luau state. `Ctrl+Shift+P` toggles the shell
+window from anywhere.
+
+## release
+
+Push a `v*` tag; the `release.yml` workflow builds and uploads
+`pengooin-<tag>.exe` to a GitHub Release.
 
 ## per-patch derivation workflow
 

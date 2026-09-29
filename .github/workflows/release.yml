@@ -1,0 +1,62 @@
+name: release
+
+# tag a commit `v*` (e.g. `git tag v1.0.0 && git push origin v1.0.0`)
+# and this workflow builds pengooin.exe and publishes it as a GitHub Release.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'release tag (e.g. v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: fetch Luau (bundled compiler)
+        run: git clone --depth 1 --branch 0.640 https://github.com/Roblox/luau.git third_party/luau
+
+      - name: configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: build Release
+        run: cmake --build build --config Release --parallel
+
+      - name: rename artifact for release
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_REF -like 'refs/tags/*') { $env:GITHUB_REF -replace 'refs/tags/','' } else { '${{ github.event.inputs.tag }}' }
+          echo "TAG=$tag" >> $env:GITHUB_ENV
+          Copy-Item build/injector/Release/pengooin.exe pengooin-$tag.exe
+
+      - name: publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: pengooin ${{ env.TAG }}
+          files: pengooin-${{ env.TAG }}.exe
+          generate_release_notes: true
+          body: |
+            ## pengooin ${{ env.TAG }}
+
+            Single-exe executor watcher. Run it once — it sits in the tray and
+            auto-injects into `RobloxPlayerBeta.exe` the moment a Roblox client
+            opens.
+
+            **Usage**
+
+            1. Download `pengooin-${{ env.TAG }}.exe`
+            2. Double-click it — it lives in the system tray
+            3. Launch Roblox; the payload attaches automatically
+            4. `Ctrl+Shift+P` toggles the executor shell
+            5. Right-click the tray icon → Exit to stop watching
+
+            Logs: `%LOCALAPPDATA%\pengooin\watcher.log`

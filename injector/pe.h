@@ -19,6 +19,7 @@ struct Image {
 };
 
 bool load(const std::wstring& path, Image& out);
+bool load_from_memory(const void* data, size_t size, Image& out);
 bool valid_pe(const Image& img);
 
 // helper: resolve an RVA to an offset within the on-disk file image
