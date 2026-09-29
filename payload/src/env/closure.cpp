@@ -29,6 +29,7 @@
 #include "env/environment.h"
 #include "luau/api.h"
 #include "luau/internal.h"
+#include "luau/compiler_bridge.h"
 
 namespace r9k::env::closure_lib {
 

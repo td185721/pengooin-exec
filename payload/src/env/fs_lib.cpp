@@ -22,6 +22,7 @@
 
 #include <shlwapi.h>
 #include <shlobj.h>
+#include <shellapi.h>
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "shell32.lib")
 

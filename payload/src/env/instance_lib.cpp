@@ -161,7 +161,7 @@ static int l_getconnections(lua_State* L) {
     if (!sig) return 1;
 
     // walk Signal slot list
-    auto* slot_head = *reinterpret_cast<uptr*>(reinterpret_cast<u8*>(sig) + SIG_SLOTS_HEAD);
+    uptr slot_head = *reinterpret_cast<uptr*>(reinterpret_cast<u8*>(sig) + SIG_SLOTS_HEAD);
     int n = 0;
     for (uptr slot = slot_head; slot; ) {
         a.createtable(L, 0, 6);
