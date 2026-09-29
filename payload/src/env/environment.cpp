@@ -148,8 +148,9 @@ bool is_r9k_closure(lua_State* L, int idx) {
 }
 
 // forward declare per-phase installers so env_install can call them all
-namespace closure_lib { void install(); }
-namespace debug_lib   { void install(); }
+namespace closure_lib  { void install(); }
+namespace debug_lib    { void install(); }
+namespace instance_lib { void install(); }
 
 }  // namespace r9k::env
 
@@ -159,7 +160,8 @@ void env_install() {
     env::install();
     env::closure_lib::install();
     env::debug_lib::install();
-    // instance_lib, fs_lib, net_lib, crypt_lib, input_lib, drawing_lib,
-    // ui_lib — appended as each phase lands.
+    env::instance_lib::install();
+    // fs_lib, net_lib, crypt_lib, input_lib, drawing_lib, ui_lib —
+    // appended as each phase lands.
 }
 }
