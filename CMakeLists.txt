@@ -15,9 +15,16 @@ endif()
 add_compile_options(
     /W4 /permissive- /Zc:__cplusplus /Zc:preprocessor /EHsc /GR-
     /wd4100 /wd4201 /wd4324
-    $<$<CONFIG:Release>:/O2 /GL /Gy /Gw>
+    "$<$<CONFIG:Release>:/O2>"
+    "$<$<CONFIG:Release>:/GL>"
+    "$<$<CONFIG:Release>:/Gy>"
+    "$<$<CONFIG:Release>:/Gw>"
 )
-add_link_options($<$<CONFIG:Release>:/LTCG /OPT:REF /OPT:ICF>)
+add_link_options(
+    "$<$<CONFIG:Release>:/LTCG>"
+    "$<$<CONFIG:Release>:/OPT:REF>"
+    "$<$<CONFIG:Release>:/OPT:ICF>"
+)
 
 add_compile_definitions(
     _WIN32_WINNT=0x0A00
