@@ -12,6 +12,7 @@
 #include "env/environment.h"
 #include "luau/api.h"
 #include "luau/internal.h"
+#include "luau/executor.h"
 #include "roblox/luau_state.h"
 
 namespace r9k::env {
@@ -171,6 +172,20 @@ void env_install() {
     env::crypt_lib::install();
     env::input_lib::install();
     env::drawing_lib::install();
-    // ui_lib — appended in phase 12.
+
+    // boot script — wires Heartbeat/RenderStepped ticks + identifyexecutor.
+    // embedded at build time so the DLL doesn't need a companion file on disk.
+    static const char* BOOT_LUAU =
+        "local RunService = game:GetService('RunService')\n"
+        "RunService.RenderStepped:Connect(function() if _drawing_render then _drawing_render() end end)\n"
+        "RunService.Heartbeat:Connect(function() if _pump_ws then _pump_ws() end end)\n"
+        "function identifyexecutor() return 'pengooin', '1.0.0' end\n"
+        "function getexecutorname() return 'pengooin' end\n"
+        "function get_executor_name() return 'pengooin' end\n"
+        "local oGet, oPost = game.HttpGet, game.HttpPost\n"
+        "game.HttpGet  = function(_, u, n) return httpget(u, n) end\n"
+        "game.HttpPost = function(_, u, b, c) return httppost(u, b, c) end\n"
+        "print('[pengooin] runtime online')\n";
+    r9k::luau::run(BOOT_LUAU, "=[boot]");
 }
 }

@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: fetch Luau (bundled compiler)
+        run: |
+          git clone --depth 1 --branch 0.640 https://github.com/Roblox/luau.git third_party/luau
+
+      - name: configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: build Release
+        run: cmake --build build --config Release --parallel
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pengooin-${{ github.sha }}
+          path: |
+            build/injector/Release/r9k.exe
+            build/payload/Release/r9k_payload.dll
