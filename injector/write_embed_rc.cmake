@@ -8,4 +8,4 @@
 # escape sequences.
 file(TO_CMAKE_PATH "${PAYLOAD}" PAYLOAD_FWD)
 file(WRITE "${OUT}"
-"#include <windows.h>\n1001 RCDATA \"${PAYLOAD_FWD}\"\n")
+"1001 RCDATA \"${PAYLOAD_FWD}\"\n")

@@ -33,5 +33,5 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/luau/CMakeLists.txt)
     add_subdirectory(third_party/luau)
 endif()
 
-add_subdirectory(injector)
 add_subdirectory(payload)
+add_subdirectory(injector)

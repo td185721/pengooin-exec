@@ -25,7 +25,10 @@
 #include <shlobj.h>
 #include <shellapi.h>
 #include <cstdio>
+#include <cstdarg>
 #include <cstdint>
+#include <cstring>
+#include <cwchar>
 #include <string>
 #include <set>
 #include <mutex>
@@ -228,7 +231,7 @@ void tray_add(HWND hwnd) {
     g_nid.uFlags           = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     g_nid.uCallbackMessage = WM_TRAY;
     g_nid.hIcon            = LoadIcon(nullptr, IDI_APPLICATION);
-    wcscpy_s(g_nid.szTip, L"pengooin — watching for RobloxPlayerBeta");
+    wcscpy_s(g_nid.szTip, L"pengooin - watching for RobloxPlayerBeta");
     Shell_NotifyIconW(NIM_ADD, &g_nid);
 }
 void tray_remove() { Shell_NotifyIconW(NIM_DELETE, &g_nid); }
@@ -239,7 +242,7 @@ void tray_menu(HWND hwnd) {
 
     wchar_t status[128];
     int n = g_inject_count.load();
-    swprintf_s(status, L"pengooin — %d injection%s", n, n == 1 ? L"" : L"s");
+    swprintf_s(status, L"pengooin - %d injection%s", n, n == 1 ? L"" : L"s");
     AppendMenuW(m, MF_STRING | MF_GRAYED, ID_TRAY_STATUS, status);
     AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(m, MF_STRING, ID_TRAY_EXIT, L"Exit");
