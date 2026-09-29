@@ -152,6 +152,7 @@ namespace closure_lib  { void install(); }
 namespace debug_lib    { void install(); }
 namespace instance_lib { void install(); }
 namespace fs_lib       { void install(); }
+namespace net_lib      { void install(); }
 
 }  // namespace r9k::env
 
@@ -163,7 +164,7 @@ void env_install() {
     env::debug_lib::install();
     env::instance_lib::install();
     env::fs_lib::install();
-    // net_lib, crypt_lib, input_lib, drawing_lib, ui_lib — appended as
-    // each phase lands.
+    env::net_lib::install();
+    // crypt_lib, input_lib, drawing_lib, ui_lib — appended as each phase lands.
 }
 }
