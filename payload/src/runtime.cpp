@@ -1,33 +1,38 @@
-// runtime.cpp — top-level boot: wait for the client to finish init, then wire up
+// runtime.cpp — top-level boot chain
 // language: C++20, target: Windows 11 x64, MSVC
 #include "pch.h"
 #include "memory/pattern.h"
+#include "luau/api.h"
 
 namespace r9k {
 
-// forward — each phase fills in its own translation unit
-void scheduler_bind();   // src/roblox/scheduler.cpp    (phase 2)
-void luau_state_bind();  // src/roblox/luau_state.cpp   (phase 2)
-void compiler_init();    // src/luau/compiler_bridge.cpp (phase 3)
-void env_install();      // src/env/environment.cpp     (phase 4+)
+// each phase drops its real impl in its own TU; weak stubs below cover the
+// gap until then so the payload keeps linking phase by phase.
+void scheduler_bind();
+void luau_state_bind();
+void compiler_init();
+void env_install();
 
 void runtime_boot() {
-    // warmup: main module + all imports need to be settled before we scan.
-    // two seconds is enough on every SKU tested; longer is fine because the
-    // player isn't in-game yet when the DLL lands via a pre-launch inject.
+    // warmup: wait for the main module + imports to be fully mapped and for
+    // Hyperion (when present) to finish its own initialization. two seconds
+    // is enough on every SKU tested; a proper build gates this on the DataModel
+    // reaching Running instead of a sleep.
     Sleep(2000);
 
     auto main = mem::main_module();
     if (!main.base) return;
 
-    scheduler_bind();
-    luau_state_bind();
-    compiler_init();
-    env_install();
+    scheduler_bind();       // phase 2 — TaskScheduler singleton
+    luau_state_bind();      // phase 2 — elevated lua_State
+    luau::api_bind();       // phase 3 — Luau C API jump table
+    compiler_init();        // phase 3 — Luau.Compiler
+    env_install();          // phase 4+ — sUNC/UNC surface
 }
 
-// weak stubs so the payload links until each phase drops its real symbol.
-// MSVC uses /alternatename to route the missing decorated name to the stub.
+// weak stubs — /alternatename redirects any unresolved decorated symbol to the
+// matching _stub. once a phase's TU is included in the build, its own symbol
+// wins the linker's tie-break and the stub falls out.
 #if defined(_MSC_VER)
 #pragma comment(linker, "/alternatename:?scheduler_bind@r9k@@YAXXZ=?scheduler_bind_stub@r9k@@YAXXZ")
 #pragma comment(linker, "/alternatename:?luau_state_bind@r9k@@YAXXZ=?luau_state_bind_stub@r9k@@YAXXZ")
