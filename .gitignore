@@ -1,0 +1,34 @@
+# build artifacts
+build/
+out/
+x64/
+Debug/
+Release/
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
+*.exe
+*.log
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.filters
+*.vcxproj*
+CMakeSettings.json
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+
+# vendored
+third_party/*/
+!third_party/.keep
+
+# scratch
+scratch/
+notes.local.md
