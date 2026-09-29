@@ -151,6 +151,7 @@ bool is_r9k_closure(lua_State* L, int idx) {
 namespace closure_lib  { void install(); }
 namespace debug_lib    { void install(); }
 namespace instance_lib { void install(); }
+namespace fs_lib       { void install(); }
 
 }  // namespace r9k::env
 
@@ -161,7 +162,8 @@ void env_install() {
     env::closure_lib::install();
     env::debug_lib::install();
     env::instance_lib::install();
-    // fs_lib, net_lib, crypt_lib, input_lib, drawing_lib, ui_lib —
-    // appended as each phase lands.
+    env::fs_lib::install();
+    // net_lib, crypt_lib, input_lib, drawing_lib, ui_lib — appended as
+    // each phase lands.
 }
 }
