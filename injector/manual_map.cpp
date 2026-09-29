@@ -6,6 +6,9 @@
 
 namespace mm {
 
+static DWORD g_last_exit = STILL_ACTIVE;
+DWORD last_entry_exit_code() { return g_last_exit; }
+
 static bool write_remote(HANDLE proc, uintptr_t dst, const void* src, size_t n) {
     SIZE_T w = 0;
     return WriteProcessMemory(proc, reinterpret_cast<LPVOID>(dst), src, n, &w) && w == n;
@@ -145,6 +148,9 @@ static bool call_entry(HANDLE proc, uintptr_t remote_base, uint64_t entry_rva) {
                                    nullptr, 0, nullptr);
     if (!th) return false;
     WaitForSingleObject(th, INFINITE);
+    DWORD exit_code = STILL_ACTIVE;
+    GetExitCodeThread(th, &exit_code);
+    g_last_exit = exit_code;
     CloseHandle(th);
     VirtualFreeEx(proc, shell, 0, MEM_RELEASE);
     return true;

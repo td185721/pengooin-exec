@@ -232,9 +232,18 @@ bool inject(DWORD pid) {
         console_enqueue("[watcher] injection failed for pid " + std::to_string(pid));
         return false;
     }
-    logf("injected pid %lu @ 0x%016llX", pid, (unsigned long long)base);
+    DWORD exit_code = mm::last_entry_exit_code();
+    logf("injected pid %lu @ 0x%016llX  entry_exit=0x%08lX",
+         pid, (unsigned long long)base, exit_code);
     g_inject_count.fetch_add(1);
-    console_enqueue("[watcher] injected pid " + std::to_string(pid));
+    char buf[128];
+    sprintf_s(buf, "[watcher] injected pid %lu, entry exit code 0x%08lX %s",
+              pid, exit_code,
+              exit_code == 0 ? "(clean return)" :
+              exit_code == 0xC0000005 ? "(ACCESS_VIOLATION - CRT init crashed)" :
+              exit_code == 0xC000001D ? "(ILLEGAL_INSTRUCTION - shellcode corrupt)" :
+              "(unusual)");
+    console_enqueue(buf);
     return true;
 }
 

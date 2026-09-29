@@ -11,6 +11,12 @@ namespace mm {
 // returns remote base, or 0 on failure.
 uintptr_t inject(HANDLE proc, const pe::Image& img);
 
+// remote thread's exit code from the last call_entry inside inject().
+// STILL_ACTIVE if no injection has completed. Read after inject() to
+// distinguish "shellcode returned cleanly (0)" from "thread killed by
+// unhandled exception (e.g. 0xC0000005 STATUS_ACCESS_VIOLATION)".
+DWORD last_entry_exit_code();
+
 // magic passed as Reserved so DllMain can distinguish manual-map from Win32 loader
 constexpr uintptr_t MM_MAGIC = 0x9EEDECAFULL;
 

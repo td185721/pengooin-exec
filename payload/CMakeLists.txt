@@ -10,3 +10,10 @@ target_link_libraries(payload PRIVATE
     $<TARGET_NAME_IF_EXISTS:Luau.Ast>
 )
 set_target_properties(payload PROPERTIES OUTPUT_NAME "r9k_payload" PREFIX "")
+
+# custom entry: pengooin_dll_entry registers x64 unwind info before handing off
+# to _DllMainCRTStartup. required for manual-mapped DLLs so CRT init exceptions
+# unwind instead of silently killing the thread.
+if(MSVC)
+    set_target_properties(payload PROPERTIES LINK_FLAGS "/ENTRY:pengooin_dll_entry")
+endif()
