@@ -4,6 +4,7 @@
 #include "memory/pattern.h"
 #include "luau/api.h"
 #include "ui/shell.h"
+#include "net/pipe_client.h"
 
 namespace r9k {
 
@@ -29,7 +30,8 @@ void runtime_boot() {
     luau::api_bind();       // phase 3 — Luau C API jump table
     compiler_init();        // phase 3 — Luau.Compiler
     env_install();          // phase 4-11 — sUNC/UNC surface
-    ui::shell_start();      // phase 12 — native Win32 shell
+    ui::shell_start();      // phase 12 — in-game Win32 shell (Ctrl+Shift+P)
+    net::pipe_client_start();// phase 13 — control channel to watcher GUI
 }
 
 // weak stubs — /alternatename redirects any unresolved decorated symbol to the
