@@ -31,16 +31,31 @@
 
 namespace r9k {
 
-void dbg_log(const char* fmt, ...) {
-    wchar_t appdata[MAX_PATH]{};
-    if (SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, appdata) != S_OK) return;
-    std::wstring dir = appdata; dir += L"\\pengooin";
-    SHCreateDirectoryExW(nullptr, dir.c_str(), nullptr);
-    std::wstring p = dir + L"\\payload.log";
-    HANDLE h = CreateFileW(p.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ, nullptr,
-                           OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (h == INVALID_HANDLE_VALUE) return;
+namespace {
+    // try writing to `path`; return true if the write landed.
+    bool try_write_log(const wchar_t* path, const char* stamp, int slen,
+                       const char* body, int blen) {
+        HANDLE h = CreateFileW(path, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                               nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (h == INVALID_HANDLE_VALUE) return false;
+        DWORD w = 0;
+        BOOL ok1 = WriteFile(h, stamp, (DWORD)slen, &w, nullptr);
+        BOOL ok2 = WriteFile(h, body,  (DWORD)blen, &w, nullptr);
+        CloseHandle(h);
+        return ok1 && ok2;
+    }
+}
 
+// Log every event to as many sinks as possible so silent Roblox-sandbox
+// failures still surface somewhere. Priority order:
+//   1. C:\Users\Public\pengooin_payload.log (not virtualized, world-writable)
+//   2. %TEMP%\pengooin_payload.log  (respects AppContainer redirection but
+//      always writable inside the process's own sandbox)
+//   3. %LOCALAPPDATA%\pengooin\payload.log (previous location; may be
+//      virtualized to Packages\<appid>\LocalCache\... inside AppContainer)
+// Also fires OutputDebugStringA so DebugView.exe captures the line even if
+// every file write fails.
+void dbg_log(const char* fmt, ...) {
     SYSTEMTIME t; GetLocalTime(&t);
     char stamp[64];
     int slen = sprintf_s(stamp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d] ",
@@ -51,13 +66,38 @@ void dbg_log(const char* fmt, ...) {
     int blen = vsnprintf(body, sizeof(body), fmt, ap);
     va_end(ap);
     if (blen < 0) blen = 0;
-    if (blen > (int)sizeof(body) - 2) blen = (int)sizeof(body) - 2;
+    if (blen > (int)sizeof(body) - 4) blen = (int)sizeof(body) - 4;
     body[blen++] = '\r'; body[blen++] = '\n';
 
-    DWORD w = 0;
-    WriteFile(h, stamp, (DWORD)slen, &w, nullptr);
-    WriteFile(h, body,  (DWORD)blen, &w, nullptr);
-    CloseHandle(h);
+    // OutputDebugString gets a null-terminated combined string
+    char dbgline[2200];
+    int n = 0;
+    for (int i = 0; i < slen && n < (int)sizeof(dbgline) - 1; ++i) dbgline[n++] = stamp[i];
+    for (int i = 0; i < blen && n < (int)sizeof(dbgline) - 1; ++i) dbgline[n++] = body[i];
+    dbgline[n] = 0;
+    OutputDebugStringA(dbgline);
+
+    // sink 1: world-writable public folder
+    if (try_write_log(L"C:\\Users\\Public\\pengooin_payload.log", stamp, slen, body, blen))
+        return;
+
+    // sink 2: process's own TEMP (handles AppContainer redirect gracefully)
+    wchar_t tmp[MAX_PATH]{};
+    if (GetTempPathW(MAX_PATH, tmp) > 0) {
+        std::wstring p = tmp;
+        if (!p.empty() && p.back() != L'\\') p += L'\\';
+        p += L"pengooin_payload.log";
+        if (try_write_log(p.c_str(), stamp, slen, body, blen)) return;
+    }
+
+    // sink 3: LOCALAPPDATA (may be package-redirected)
+    wchar_t appdata[MAX_PATH]{};
+    if (SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, appdata) == S_OK) {
+        std::wstring dir = appdata; dir += L"\\pengooin";
+        SHCreateDirectoryExW(nullptr, dir.c_str(), nullptr);
+        std::wstring p = dir + L"\\payload.log";
+        try_write_log(p.c_str(), stamp, slen, body, blen);
+    }
 }
 
 }  // namespace r9k
